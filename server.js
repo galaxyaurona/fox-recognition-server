@@ -78,8 +78,9 @@ app.get('/log', function(req, res) {
 });
 // root index
 app.use('/', express.static(path.join(__dirname, 'public')))
-
-let running_port = process.env.PORT | 3000;
+//
+//let running_port = process.env.PORT | 3000;
+var running_port = 80;
 app.listen(running_port, function () {
     console.log('Example app listening on port ' + running_port)
 })
