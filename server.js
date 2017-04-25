@@ -36,6 +36,9 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
+app.set('views', './views')
+app.set('view engine', 'pug')
+
 app.post('/upload', upload.single('image'), function (req, res) {
     if (!req.file)
         return res.status(400).send('No files were uploaded.');
@@ -56,13 +59,20 @@ app.post('/upload', upload.single('image'), function (req, res) {
             json_response[key] = Math.round(parseFloat(docker_response[key]) *100)+ " %"
         })
         json_response["prediction"] = docker_response["not fox"] > docker_response["fox"] ? "Image does not containt a fox" : "Image contains a fox" 
-        res.json(json_response);
+        json_response["url"]= "/"+image.path;
+        //console.log("json"+JSON.stringify(json_response))
+        res.render("result",json_response);
     });
     // Use the mv() method to place the file somewhere on your server 
 
 
 
 });
+
+
+// overwite console log for logging purpose
+
+
 console.log = function(d) { //
   accessLogStream.write(util.format(d) + '\n');
   log_stdout.write(util.format(d) + '\n');
@@ -76,11 +86,12 @@ app.get('/log', function(req, res) {
   
     res.sendFile(path.join(__dirname, 'access.log'));
 });
+app.use('/classifying_images', express.static(path.join(__dirname, 'classifying_images')))
 // root index
 app.use('/', express.static(path.join(__dirname, 'public')))
 //
 //let running_port = process.env.PORT | 3000;
-var running_port = 80;
+var running_port =3000;
 app.listen(running_port, function () {
     console.log('Example app listening on port ' + running_port)
 })
