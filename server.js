@@ -116,7 +116,7 @@ server.listen(process.env.SSL_PORT || 443, process.env.IP || "0.0.0.0", function
 //
 
 // redirect server
-/*var redirectApp = express(),
+var redirectApp = express(),
   redirectServer = http.createServer(redirectApp);
 
 redirectApp.use(function requireHTTPS(req, res, next) {
@@ -125,7 +125,7 @@ redirectApp.use(function requireHTTPS(req, res, next) {
     }
     next();
   })
-*/
+
 // PREVENT LOCAL HOST ISSUE
 if (process.env.PORT != process.env.SSL_PORT)
   redirectServer.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0");
