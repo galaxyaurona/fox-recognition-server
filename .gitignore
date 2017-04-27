@@ -1,3 +1,4 @@
 node_modules/
 classifying_images/
 *.log
+init_env_variable.sh

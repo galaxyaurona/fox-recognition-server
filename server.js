@@ -1,4 +1,7 @@
+
 const express = require('express');
+var http = require('http');
+var https = require("https");
 
 var path = require('path');
 var multer = require('multer')
@@ -10,9 +13,10 @@ const morgan = require('morgan');
 var exec = require('child_process').exec;
 var fs = require('fs')
 var util = require('util');
-// 
 var log_stdout = process.stdout;
 
+
+// MULTIER OPTION
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'classifying_images/')
@@ -23,13 +27,20 @@ var storage = multer.diskStorage({
         cb(null, Date.now() + "." + extension)
     }
 })
-
+// MULETER STORAGE OPTIONS
 var upload = multer(
     {
         storage: storage,
         preservePath: true
     }
 )
+//SSL OPTION
+var options = {
+  key: fs.readFileSync("./key.pem"),
+  cert: fs.readFileSync("./cert.pem")
+};
+// CREATE APP ROUTER
+
 var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'})
 app.use(morgan('combined',{stream: accessLogStream}));
 app.use(cors());
@@ -71,19 +82,18 @@ app.post('/upload', upload.single('image'), function (req, res) {
 
 
 // overwite console log for logging purpose
-
-
 console.log = function(d) { //
   accessLogStream.write(util.format(d) + '\n');
   log_stdout.write(util.format(d) + '\n');
 };
+
 // static route for sending data
 app.post('/measurement/measurements', function(req, res) {
      console.log("Body of request: "+JSON.stringify(req.body))
     res.json({"success":"true"});
 });
-app.get('/log', function(req, res) {
-  
+// ROUTE FOR LOGGING 
+app.get('/log', function(req, res) {  
     res.sendFile(path.join(__dirname, 'access.log'));
 });
 app.use('/classifying_images', express.static(path.join(__dirname, 'classifying_images')))
@@ -91,7 +101,32 @@ app.use('/classifying_images', express.static(path.join(__dirname, 'classifying_
 app.use('/', express.static(path.join(__dirname, 'public')))
 //
 //let running_port = process.env.PORT | 3000;
-var running_port =3000;
-app.listen(running_port, function () {
-    console.log('Example app listening on port ' + running_port)
-})
+
+
+// HTTPS SERVER
+var server = http.createServer(app);
+// SAFE GUARD FOR localhost
+if (process.env.PORT != process.env.SSL_PORT)
+    server = https.createServer(options, app);
+server.listen(process.env.SSL_PORT || 443, process.env.IP || "0.0.0.0", function() {
+  var addr = server.address();
+  console.log("address",server);
+  console.log("Server listening at", addr.address + ":" + addr.port);
+});
+//
+
+// redirect server
+/*var redirectApp = express(),
+  redirectServer = http.createServer(redirectApp);
+
+redirectApp.use(function requireHTTPS(req, res, next) {
+    if (!req.secure) {
+      return res.redirect('https://' + req.headers.host + req.url);
+    }
+    next();
+  })
+*/
+// PREVENT LOCAL HOST ISSUE
+if (process.env.PORT != process.env.SSL_PORT)
+  redirectServer.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0");
+
