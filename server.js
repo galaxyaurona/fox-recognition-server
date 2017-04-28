@@ -24,7 +24,7 @@ var storage = multer.diskStorage({
     filename: function (req, file, cb) {
         tokenized_name = file.originalname.split(".")
         extension = tokenized_name[tokenized_name.length - 1];
-        cb(null, Date.now() + "." + extension)
+        cb(null, Date.now() + "." + extension.toLowerCase())
     }
 })
 // MULETER STORAGE OPTIONS
@@ -49,8 +49,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.set('views', './views')
 app.set('view engine', 'pug')
-
-app.post('/upload', upload.single('image'), function (req, res) {
+// ROUTE TO DETECT FOX
+app.post('/detect-fox', upload.single('image'), function (req, res) {
     if (!req.file)
         return res.status(400).send('No files were uploaded.');
 
@@ -72,7 +72,39 @@ app.post('/upload', upload.single('image'), function (req, res) {
         json_response["prediction"] = docker_response["not fox"] > docker_response["fox"] ? "Image does not containt a fox" : "Image contains a fox" 
         json_response["url"]= "/"+image.path;
         //console.log("json"+JSON.stringify(json_response))
-        res.render("result",json_response);
+        res.render("fox-result",json_response);
+    });
+    // Use the mv() method to place the file somewhere on your server 
+
+
+
+});
+
+// ROUTE TO DETECT GOOFY
+app.post('/detect-goofy', upload.single('image'), function (req, res) {
+    if (!req.file)
+        return res.status(400).send('No files were uploaded.');
+
+    var image = req.file;
+
+    var full_path = path.join(__dirname, image.path);
+    var docker_command = "docker exec goofy-recognition python label_image.py /classifying_images/" + image.filename;
+    exec(docker_command, function (error, stdout, stderr) {
+     
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
+        docker_response = JSON.parse(stdout)
+        json_response = {};
+        Object.keys(docker_response).forEach(function(key,index,array){
+            docker_response[key] = parseFloat(docker_response[key])
+            json_response[key] = Math.round(parseFloat(docker_response[key]) *100)+ " %"
+        })
+
+        json_response["prediction"] = (docker_response["goofy"] - 0.75) > 0 ?  "Image contains a stuffed goofy" : "Image does not containt a stuffed goofy" 
+        json_response["url"]= "/"+image.path;
+        //console.log("json"+JSON.stringify(json_response))
+        res.render("goofy-result",json_response);
     });
     // Use the mv() method to place the file somewhere on your server 
 
