@@ -14,7 +14,7 @@ var exec = require('child_process').exec;
 var fs = require('fs')
 var util = require('util');
 var log_stdout = process.stdout;
-
+var serveIndex = require('serve-index');
 
 // MULTIER OPTION
 var storage = multer.diskStorage({
@@ -212,6 +212,9 @@ server.listen(process.env.SSL_PORT || 443, process.env.IP || "0.0.0.0", function
 });
 //
 
+app.use('/classifying_images', serveIndex(__dirname + '/classifying_images'));
+
+//app.use('/classifying_images', express.static(path.join(__dirname, 'classifying_images')))
 // redirect server
 var redirectApp = express(),
   redirectServer = http.createServer(redirectApp);
